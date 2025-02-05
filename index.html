@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kundali Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .kundali-container { display: flex; justify-content: center; gap: 50px; }
+        .kundali-grid { 
+            width: 350px; height: 350px; border: 2px solid red; position: relative; 
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+        }
+        .house { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            border: 1px solid black; font-size: 14px; position: relative; padding: 5px;
+        }
+        .house-number { position: absolute; top: 2px; right: 5px; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>Enter Birth Details</h2>
+    <form id="kundaliForm">
+        Date: <input type="date" id="birthDate" required> <br>
+        Time: <input type="time" id="birthTime" required> <br>
+        Latitude: <input type="text" id="latitude" value="17.9526" required> <br>
+        Longitude: <input type="text" id="longitude" value="73.8856" required> <br>
+        Timezone: <input type="text" id="timezone" value="5.5" required> <br>
+        <button type="submit">Generate Kundali</button>
+    </form>
+
+    <h3>Your Kundali</h3>
+    <div class="kundali-container">
+        <div>
+            <h4>Janma Kundali</h4>
+            <div class="kundali-grid" id="janmaKundali">
+                <!-- Houses will be dynamically created here -->
+            </div>
+        </div>
+        
+        <div>
+            <h4>Lagna Kundali</h4>
+            <div class="kundali-grid" id="lagnaKundali">
+                <!-- Houses will be dynamically created here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("kundaliForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            
+            let birthDate = document.getElementById("birthDate").value;
+            let birthTime = document.getElementById("birthTime").value;
+            let latitude = document.getElementById("latitude").value;
+            let longitude = document.getElementById("longitude").value;
+            let timezone = document.getElementById("timezone").value;
+            
+            let [year, month, day] = birthDate.split("-");
+            let [hour, minute] = birthTime.split(":");
+            
+            let requestData = {
+                year: year, month: month, day: day,
+                hour: hour, minute: minute,
+                lat: latitude, lon: longitude, tz: timezone
+            };
+
+            fetch("/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                generateKundali("janmaKundali", data.janma_houses);
+                generateKundali("lagnaKundali", data.lagna_houses);
+            })
+            .catch(error => console.error("Error:", error));
+        });
+
+        function generateKundali(containerId, houses) {
+            let container = document.getElementById(containerId);
+            container.innerHTML = ""; // Clear previous data
+
+            for (let i = 1; i <= 12; i++) {
+                let houseDiv = document.createElement("div");
+                houseDiv.className = "house";
+                houseDiv.innerHTML = `
+                    <div class="house-number">${i}</div>
+                    <div>${houses[i].join(", ") || "-"}</div>
+                `;
+                container.appendChild(houseDiv);
+            }
+        }
+    </script>
+
+</body>
+</html>
